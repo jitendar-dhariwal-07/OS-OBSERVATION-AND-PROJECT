@@ -1,4 +1,5 @@
-#PROGRAM OF EACH EXPERIMENTS(2-15)
+PROGRAM OF EACH EXPERIMENTS(2-15)
+
 Operating Systems Lab – Programs and Sample Outputs
 Programs and sample outputs for each experiment, in order. Experiment 1 (Linux commands, filters and Ubuntu installation) consists of shell commands and is covered in the lab manual.
 Experiment 2: Process Creation using fork() and Usage of getpid(), getppid(), wait() Functions
