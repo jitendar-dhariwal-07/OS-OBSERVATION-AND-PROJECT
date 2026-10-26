@@ -1,0 +1,54 @@
+=== TSCOS v1.0 : Traffic Signal Control Operating System ===
+[SYSTEM INIT] [08:00:00] Defaults: Green 30s, Yellow 5s, Red 65s. Mode: AUTOMATIC.
+
+--- Scenario 1: Adaptive control (rush hour) ---
+[SENSOR    ] [08:00:05] Density -> N:45 S:12 E:8 W:15
+[RULE MATCH] [08:00:05] Step 11-15: Rush hour=YES, target NORTH (density 45).
+[SIGNAL SET] [08:00:05] NORTH: GREEN (50s) [ADAPTIVE_DENSITY]
+              N:GREEN  S:RED    E:RED    W:RED    
+[TRANSITION] [08:00:55] NORTH: YELLOW (5s)
+[TRANSITION] [08:01:00] NORTH: RED
+
+--- Scenario 2: Emergency vehicle preemption ---
+[SENSOR    ] [08:01:00] AMBULANCE detected on EAST approach!
+[RULE MATCH] [08:01:00] Step 7-8: Emergency vehicle on EAST. Preempting cycle.
+[SIGNAL SET] [08:01:00] EAST: GREEN (25s) [EMERGENCY_PREEMPT]
+              N:RED    S:RED    E:GREEN  W:RED    
+[INFO      ] [08:01:25] Emergency vehicle cleared intersection.
+[TRANSITION] [08:01:25] EAST: YELLOW (5s)
+[TRANSITION] [08:01:30] EAST: RED
+
+--- Scenario 3: Pedestrian crossing ---
+[SENSOR    ] [08:01:30] Pedestrian push-button pressed at WEST crossing.
+[RULE MATCH] [08:01:30] Step 9-10: Pedestrian request at WEST crossing.
+[SIGNAL SET] [08:01:30] VEHICLES: ALL RED | WEST PEDESTRIAN: WALK (15s)
+[TRANSITION] [08:01:45] Pedestrian phase expired. Returning to vehicle loop.
+
+--- Scenario 4: Equal low traffic (round-robin) ---
+[SENSOR    ] [08:01:50] Density -> N:5 S:5 E:4 W:5
+[RULE MATCH] [08:01:50] Step 16-17: Equal density. Round-Robin fallback (20s quantum).
+[SIGNAL SET] [08:01:50] NORTH: GREEN (20s) [ROUND_ROBIN]
+              N:GREEN  S:RED    E:RED    W:RED    
+[TRANSITION] [08:02:10] NORTH: YELLOW (5s)
+[TRANSITION] [08:02:15] NORTH: RED
+[SIGNAL SET] [08:02:15] EAST: GREEN (20s) [ROUND_ROBIN]
+              N:RED    S:RED    E:GREEN  W:RED    
+[TRANSITION] [08:02:35] EAST: YELLOW (5s)
+[TRANSITION] [08:02:40] EAST: RED
+[SIGNAL SET] [08:02:40] SOUTH: GREEN (20s) [ROUND_ROBIN]
+              N:RED    S:GREEN  E:RED    W:RED    
+[TRANSITION] [08:03:00] SOUTH: YELLOW (5s)
+[TRANSITION] [08:03:05] SOUTH: RED
+[SIGNAL SET] [08:03:05] WEST: GREEN (20s) [ROUND_ROBIN]
+              N:RED    S:RED    E:RED    W:GREEN  
+[TRANSITION] [08:03:25] WEST: YELLOW (5s)
+[TRANSITION] [08:03:30] WEST: RED
+
+--- Scenario 5: Manual override by police ---
+[OPERATOR  ] [08:03:30] Manual override received. Automatic scheduler suspended.
+[SIGNAL SET] [08:03:30] SOUTH: GREEN (locked by operator) | OTHERS: RED
+              N:RED    S:GREEN  E:RED    W:RED    
+[OPERATOR  ] [08:04:30] Override released. Safe transition, resuming automatic mode.
+[TRANSITION] [08:04:30] SOUTH: YELLOW (5s)
+[TRANSITION] [08:04:35] SOUTH: RED
+[SYSTEM    ] [08:04:35] Mode: AUTOMATIC. Simulation complete.

@@ -1,0 +1,9 @@
+density 45 12 8 15
+rush 1
+emergency E
+ped W
+density 5 5 4 5
+override S
+release
+bogus
+quit
