@@ -1,0 +1,100 @@
+TSCOS – Traffic Signal Control Operating System
+
+A working model of the **Traffic Signal Control Operating System (TSCOS)** from the
+OS mini-project *"Design and Development of a Traffic Signal Control Operating System for
+Smart Junction Management"*.
+
+Each approach of a four-way junction (North, South, East, West) is a **process** that
+competes for a shared resource, the **green signal**, which plays the role of CPU time.
+The model applies classic OS ideas:
+
+| OS concept | Use in TSCOS |
+|---|---|
+| Priority scheduling | Manual override > Emergency > Pedestrian > Adaptive density |
+| Round-robin scheduling | Equal traffic: fixed 20 s slots in order N → E → S → W |
+| Mutual exclusion (mutex) | `intersection_lock` – only one approach may be green |
+| Safe state transitions | Every green goes GREEN → YELLOW (5 s) → RED |
+| Process control block | `PCB` record per lane |
+| IPC | `Shared` structure written by sensors, read by the scheduler |
+
+## Project layout
+
+```
+TSCOS/
+├── src/tscos.c              source code (C, POSIX threads)
+├── Makefile                 build / run / test targets
+├── tests/
+│   ├── run_tests.sh         automated checks
+│   └── interactive_input.txt  sample commands for interactive mode
+├── docs/
+│   ├── execution_log.txt    output of the scripted demo (reference run)
+│   └── interactive_example.txt  output of the interactive example
+└── README.md
+```
+
+## Build and run
+
+Requires `gcc` and `make` on Linux, macOS, or WSL.
+
+```sh
+make            # build ./tscos
+./tscos         # scripted demo: five scenarios from the report (Chapter 11)
+./tscos -i      # interactive mode: type commands and watch the signals respond
+make test       # run the automated checks
+```
+
+## Scripted demo
+
+`./tscos` runs the five scenarios from the report: adaptive rush-hour control,
+emergency vehicle preemption, pedestrian crossing, round-robin fallback, and manual
+police override. Its output matches `docs/execution_log.txt`.
+
+## Interactive mode
+
+```
+tscos> help
+  density N S E W     set vehicle counts for the four approaches
+  rush 0|1            turn rush-hour profile off/on
+  emergency N|S|E|W   emergency vehicle on an approach (preempts)
+  ped N|S|E|W         pedestrian button pressed at a crossing
+  override N|S|E|W    police force one approach green
+  release             release police override (safe transition)
+  help                show this list
+  quit                stop the system
+```
+
+Example session:
+
+```
+tscos> density 45 12 8 15     → adaptive: North green for 50 s
+tscos> emergency E            → ambulance on East: East green for 25 s
+tscos> ped W                  → all vehicles red, West pedestrians WALK 15 s
+tscos> density 5 5 4 5        → equal traffic: round-robin N → E → S → W
+tscos> override S             → police lock South green
+tscos> release                → yellow, then red, automatic mode resumes
+```
+
+A full transcript is in `docs/interactive_example.txt`.
+
+## Dynamic green time
+
+In rush-hour mode the green time for the busiest approach is
+
+    green = 20 + (2 × density) / 3      (capped at 60 s)
+
+Normal mode uses 30 s. Densities count as equal when the highest and lowest counts
+differ by at most one vehicle, which triggers round-robin.
+
+## Limitations
+
+- This is a **simulation**. Sensors and signal lamps are simulated; there is no
+  hardware driver (the report's Chapter 9 describes the planned Raspberry Pi / ESP32
+  design).
+- Time is a **virtual clock**, so a multi-minute sequence runs instantly while the
+  printed timestamps stay realistic.
+- Emergency and pedestrian requests are handled in a single pass; the full
+  22-step loop from the report is represented by `scheduler_step()`.
+
+## Licence
+
+Academic project – SRM Institute of Science and Technology, Ramapuram Campus.
